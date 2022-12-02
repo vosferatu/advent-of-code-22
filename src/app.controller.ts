@@ -11,7 +11,11 @@ export class AppController {
   }
 
   @Post()
-  runProblem(@Query('day') day: number, @Query('part') part: number): number {
-    return this.appService.runProblem(day, part);
+  runProblem(
+    @Query('day') day: number,
+    @Query('part') part: number,
+    @Query('demo') demo: string,
+  ): number {
+    return this.appService.runProblem(day, part, demo);
   }
 }
