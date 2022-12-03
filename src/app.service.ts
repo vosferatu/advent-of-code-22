@@ -32,6 +32,63 @@ export class AppService {
 }
 
 class Solver {
+  runProblem3Part2(inputString: string[]): number {
+    const charToCode = (char: string): number => {
+      const A = 'A'.charCodeAt(0);
+      const a = 'a'.charCodeAt(0);
+
+      if (char == char.toLowerCase()) {
+        return char.charCodeAt(0) - a + 1;
+      }
+
+      return char.charCodeAt(0) - A + 27;
+    };
+    const getCommonChar = (s1: string, s2: string, s3: string): string => {
+      for (const i of s1) {
+        if (s2.includes(i) && s3.includes(i)) return i.toString();
+      }
+      return '';
+    };
+    let result = 0;
+
+    do {
+      const group = inputString.splice(0, 3);
+
+      result += charToCode(getCommonChar(group[0], group[1], group[2]));
+    } while (inputString.length > 0);
+
+    return result;
+  }
+
+  runProblem3Part1(inputString: string[]): number {
+    const charToCode = (char: string): number => {
+      const A = 'A'.charCodeAt(0);
+      const a = 'a'.charCodeAt(0);
+
+      if (char == char.toLowerCase()) {
+        return char.charCodeAt(0) - a + 1;
+      }
+
+      return char.charCodeAt(0) - A + 27;
+    };
+    const getCommonChar = (s1: string, s2: string): string => {
+      for (const i of s1) {
+        if (s2.includes(i)) return i.toString();
+      }
+      return '';
+    };
+    let result = 0;
+
+    for (const line of inputString) {
+      const partOne = line.slice(0, line.length / 2);
+      const partTwo = line.slice(line.length / 2, line.length);
+
+      result += charToCode(getCommonChar(partOne, partTwo));
+    }
+
+    return result;
+  }
+
   runProblem2Part2(inputString: string[]): number {
     const input: { opponent: string; me: string }[] = inputString.map(
       (entry) => {
