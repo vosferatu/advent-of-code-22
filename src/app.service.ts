@@ -32,6 +32,66 @@ export class AppService {
 }
 
 class Solver {
+  runProblem4Part2(inputString: string[]): number {
+    let total = 0;
+
+    const checkOverlap = (pair: string[]): boolean => {
+      const pair0 = pair[0].split('-').map((section) => Number(section));
+      const pair1 = pair[1].split('-').map((section) => Number(section));
+
+      if (pair0[0] >= pair1[0] && pair0[0] <= pair1[1]) return true;
+      if (pair0[1] >= pair1[0] && pair0[1] <= pair1[1]) return true;
+
+      if (pair1[0] >= pair0[0] && pair1[0] <= pair0[1]) return true;
+      if (pair1[1] >= pair0[1] && pair1[1] <= pair0[1]) return true;
+
+      return false;
+    };
+
+    for (const line of inputString) {
+      const pair: string[] = line.split(',');
+
+      if (checkOverlap(pair)) total += 1;
+    }
+
+    return total;
+  }
+
+  runProblem4Part1(inputString: string[]): number {
+    let total = 0;
+
+    const checkOverlap = (pair: string[]): boolean => {
+      const pair0 = pair[0].split('-').map((section) => Number(section));
+      const pair1 = pair[1].split('-').map((section) => Number(section));
+
+      if (
+        pair0[0] >= pair1[0] &&
+        pair0[0] <= pair1[1] &&
+        pair0[1] >= pair1[0] &&
+        pair0[1] <= pair1[1]
+      )
+        return true;
+
+      if (
+        pair1[0] >= pair0[0] &&
+        pair1[0] <= pair0[1] &&
+        pair1[1] >= pair0[0] &&
+        pair1[1] <= pair0[1]
+      )
+        return true;
+
+      return false;
+    };
+
+    for (const line of inputString) {
+      const pair: string[] = line.split(',');
+
+      if (checkOverlap(pair)) total += 1;
+    }
+
+    return total;
+  }
+
   runProblem3Part2(inputString: string[]): number {
     const charToCode = (char: string): number => {
       const A = 'A'.charCodeAt(0);
