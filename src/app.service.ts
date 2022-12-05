@@ -23,8 +23,7 @@ export class AppService {
     const input = this.readInput(`day${day}${demo ? '_demo' : ''}.in`);
 
     console.time('solving');
-    const result: number =
-      solver[runProblemFunctionName as keyof Solver](input);
+    const result: any = solver[runProblemFunctionName as keyof Solver](input);
     console.timeEnd('solving');
 
     return result;
@@ -32,6 +31,88 @@ export class AppService {
 }
 
 class Solver {
+  runProblem5Part2(inputString: string[]): string {
+    let crates: any[] = [];
+
+    let moves = false;
+    for (const line of inputString) {
+      if (line == '') {
+        moves = true;
+        continue;
+      }
+
+      if (line == '' || line.startsWith(' 1')) {
+        crates = crates.map((crate) => crate.replace(/\W/g, ''));
+        crates = crates.map((crate) => crate.split(''));
+        continue;
+      }
+
+      if (moves) {
+        const spaces: string[] = line.split(/\s+/);
+        const [move, from, to] = spaces
+          .map((entry) => Number(entry))
+          .filter((entry) => !isNaN(entry));
+
+        console.log(crates, move, from, to);
+        const moved = crates[from - 1].splice(0, move);
+        crates[to - 1].unshift(...moved);
+      } else {
+        for (let i = 0, j = 1; j < line.length; i++, j += 4) {
+          if (crates?.[i]) {
+            crates[i] = crates[i].concat(line[j]);
+          } else {
+            crates[i] = line[j];
+          }
+        }
+      }
+    }
+
+    return crates.reduce((acc, curr) => acc + curr?.[0] ?? '', '');
+  }
+
+  runProblem5Part1(inputString: string[]): string {
+    let crates: any[] = [];
+
+    let moves = false;
+    for (const line of inputString) {
+      if (line == '') {
+        moves = true;
+        continue;
+      }
+
+      if (line == '' || line.startsWith(' 1')) {
+        crates = crates.map((crate) => crate.replace(/\W/g, ''));
+        crates = crates.map((crate) => crate.split('').reverse());
+        continue;
+      }
+
+      if (moves) {
+        const spaces: string[] = line.split(/\s+/);
+        const [move, from, to] = spaces
+          .map((entry) => Number(entry))
+          .filter((entry) => !isNaN(entry));
+
+        for (let i = move; i > 0; i--) {
+          const moved = crates[from - 1].pop();
+          crates[to - 1].push(moved);
+        }
+      } else {
+        for (let i = 0, j = 1; j < line.length; i++, j += 4) {
+          if (crates?.[i]) {
+            crates[i] = crates[i].concat(line[j]);
+          } else {
+            crates[i] = line[j];
+          }
+        }
+      }
+    }
+
+    return crates.reduce(
+      (acc, curr) => acc + curr?.[curr.length - 1] ?? '',
+      '',
+    );
+  }
+
   runProblem4Part2(inputString: string[]): number {
     let total = 0;
 
