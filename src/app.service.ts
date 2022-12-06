@@ -31,6 +31,34 @@ export class AppService {
 }
 
 class Solver {
+  runProblem6Part2(inputString: string[]): number {
+    const input = inputString?.[0];
+
+    for (let i = 0; i < input.length - 14; i++) {
+      const marker = input.substring(i, i + 14);
+      let potentialMarker: any = marker.split('');
+      potentialMarker = new Set(potentialMarker);
+      potentialMarker = [...potentialMarker].join('');
+
+      if (potentialMarker == marker) return i + 14;
+    }
+    return 0;
+  }
+
+  runProblem6Part1(inputString: string[]): number {
+    const input = inputString?.[0];
+
+    for (let i = 0; i < input.length - 4; i++) {
+      const marker = input.substring(i, i + 4);
+      let potentialMarker: any = marker.split('');
+      potentialMarker = new Set(potentialMarker);
+      potentialMarker = [...potentialMarker].join('');
+
+      if (potentialMarker == marker) return i + 4;
+    }
+    return 0;
+  }
+
   runProblem5Part2(inputString: string[]): string {
     let crates: any[] = [];
 
