@@ -33,6 +33,128 @@ export class AppService {
 class Solver {
   private readonly utils = new Utils();
 
+  runProblem8Part2(inputString: string[]): number {
+    let finalScore = 0;
+    const reverseInput: string[] = [];
+
+    for (let i = 0; i < inputString.length; i++) {
+      let columnString = '';
+      for (let j = 0; j < inputString.length; j++) {
+        columnString += inputString[j][i];
+      }
+      reverseInput.push(columnString);
+    }
+
+    const getDirectionScore = (str: string, size: number): number => {
+      const numbers = str.split('').map((token: any) => Number(token));
+      let score = 0;
+
+      for (const treeSize of numbers) {
+        if (treeSize >= size) {
+          score += 1;
+          break;
+        }
+        score += 1;
+      }
+
+      return score;
+    };
+
+    for (let i = 1; i < inputString.length - 1; i++) {
+      for (let j = 1; j < reverseInput.length - 1; j++) {
+        const treeSize = Number(inputString[i][j]);
+        const westTrees = inputString[i]
+          .substring(0, j)
+          .split('')
+          .reverse()
+          .join('');
+        const eastTrees = inputString[i].substring(
+          j + 1,
+          inputString[j].length,
+        );
+        const northTrees = reverseInput[j]
+          .substring(0, i)
+          .split('')
+          .reverse()
+          .join('');
+        const southTrees = reverseInput[j].substring(
+          i + 1,
+          reverseInput[j].length,
+        );
+
+        const treeScore =
+          getDirectionScore(westTrees, treeSize) *
+          getDirectionScore(eastTrees, treeSize) *
+          getDirectionScore(northTrees, treeSize) *
+          getDirectionScore(southTrees, treeSize);
+
+        if (treeScore > finalScore) {
+          finalScore = treeScore;
+        }
+      }
+    }
+
+    return finalScore;
+  }
+
+  runProblem8Part1(inputString: string[]): number {
+    let total = 0;
+    const rowSize = inputString[0].length;
+    const columnSize = inputString.length;
+    total += 2 * (rowSize - 1) + 2 * (columnSize - 1);
+    const reverseInput: string[] = [];
+
+    for (let i = 0; i < inputString.length; i++) {
+      let columnString = '';
+      for (let j = 0; j < inputString.length; j++) {
+        columnString += inputString[j][i];
+      }
+      reverseInput.push(columnString);
+    }
+
+    const isVisible = (str: string, size: number): boolean => {
+      const numbers = str.split('').map((token: any) => Number(token));
+
+      if (!numbers.some((e: number) => e >= size)) return true;
+
+      return false;
+    };
+
+    for (let i = 1; i < inputString.length - 1; i++) {
+      for (let j = 1; j < reverseInput.length - 1; j++) {
+        const treeSize = Number(inputString[i][j]);
+        const westTrees = inputString[i].substring(0, j);
+        const eastTrees = inputString[i].substring(
+          j + 1,
+          inputString[j].length,
+        );
+        const northTrees = reverseInput[j].substring(0, i);
+        const southTrees = reverseInput[j].substring(
+          i + 1,
+          reverseInput[j].length,
+        );
+
+        if (isVisible(westTrees, treeSize)) {
+          total += 1;
+          continue;
+        }
+        if (isVisible(eastTrees, treeSize)) {
+          total += 1;
+          continue;
+        }
+        if (isVisible(northTrees, treeSize)) {
+          total += 1;
+          continue;
+        }
+        if (isVisible(southTrees, treeSize)) {
+          total += 1;
+          continue;
+        }
+      }
+    }
+    return total;
+  }
+
   runProblem7Part2(inputString: string[]): number {
     let currDir: string = inputString[0].split(' ')[2];
     let directory: any = {};
