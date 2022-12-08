@@ -31,6 +31,164 @@ export class AppService {
 }
 
 class Solver {
+  private readonly utils = new Utils();
+
+  runProblem7Part2(inputString: string[]): number {
+    let currDir: string = inputString[0].split(' ')[2];
+    let directory: any = {};
+    directory = { '/': { size: 0, subDirectories: {} } };
+    const dirSizes: any = {};
+
+    const updateDirSize = (directory: any, currDir: string) => {
+      const currentDirSize =
+        this.utils.objectGet(directory, `${currDir}.size`) ?? 0;
+      let totalSubDirSize = 0;
+
+      for (const key of Object.keys(
+        this.utils.objectGet(directory, `${currDir}.subDirectories`),
+      )) {
+        totalSubDirSize += this.utils.objectGet(
+          directory,
+          `${currDir}.subDirectories.${key}.size`,
+        );
+      }
+      const newSize = currentDirSize + totalSubDirSize;
+
+      this.utils.objectSetValue(directory, `${currDir}.size`, newSize);
+      dirSizes[currDir] = newSize;
+    };
+
+    const calculateDiskSize = (): number => {
+      const str = inputString.reduce(
+        (acc: string, val: string) => (acc += `${val} `),
+        '',
+      );
+      let sum = 0;
+      const numbers = (str.match(/\d+/g) ?? []).map(Number);
+      for (let i = 0; i < numbers.length; i++) {
+        sum += numbers[i];
+      }
+      return sum;
+    };
+
+    for (let i = 2; i < inputString.length; i++) {
+      const output: string[] = inputString[i].split(' ');
+
+      if (output[0] == 'dir') {
+        this.utils.objectSetValue(
+          directory,
+          `${currDir}.subDirectories.${output[1]}`,
+          {
+            size: 0,
+            subDirectories: {},
+          },
+        );
+        continue;
+      }
+      if (!isNaN(Number(output[0]))) {
+        const currentDirSize =
+          this.utils.objectGet(directory, `${currDir}.size`) ?? 0;
+        const currentFileSize = Number(output[0]) ?? 0;
+        this.utils.objectSetValue(
+          directory,
+          `${currDir}.size`,
+          currentDirSize + currentFileSize,
+        );
+        updateDirSize(directory, currDir);
+        continue;
+      }
+      if (inputString[i].startsWith('$ cd')) {
+        if (output[2] == '..') {
+          updateDirSize(directory, currDir);
+          currDir = currDir.substring(0, currDir.lastIndexOf('.'));
+          currDir = currDir.substring(0, currDir.lastIndexOf('.'));
+        } else {
+          currDir = currDir + `.subDirectories.${output[2]}`;
+        }
+        continue;
+      }
+    }
+
+    const diskSize = 70000000;
+    const updateSize = 30000000;
+    const diskUsed = calculateDiskSize();
+    const minSpaceToFree = updateSize - (diskSize - Number(diskUsed));
+
+    for (const size of Object.values(dirSizes).sort(
+      (a: any, b: any) => a - b,
+    )) {
+      if (Number(size) >= minSpaceToFree) return Number(size);
+    }
+
+    return 0;
+  }
+
+  runProblem7Part1(inputString: string[]): number {
+    let total = 0;
+    let currDir: string = inputString[0].split(' ')[2];
+    let directory: any = {};
+    directory = { '/': { size: 0, subDirectories: {} } };
+
+    const updateDirSize = (directory: any, currDir: string) => {
+      const currentDirSize =
+        this.utils.objectGet(directory, `${currDir}.size`) ?? 0;
+      let totalSubDirSize = 0;
+
+      for (const key of Object.keys(
+        this.utils.objectGet(directory, `${currDir}.subDirectories`),
+      )) {
+        totalSubDirSize += this.utils.objectGet(
+          directory,
+          `${currDir}.subDirectories.${key}.size`,
+        );
+      }
+      const newSize = currentDirSize + totalSubDirSize;
+
+      this.utils.objectSetValue(directory, `${currDir}.size`, newSize);
+
+      if (newSize <= 100000) total += newSize;
+    };
+
+    for (let i = 2; i < inputString.length; i++) {
+      const output: string[] = inputString[i].split(' ');
+
+      if (output[0] == 'dir') {
+        this.utils.objectSetValue(
+          directory,
+          `${currDir}.subDirectories.${output[1]}`,
+          {
+            size: 0,
+            subDirectories: {},
+          },
+        );
+        continue;
+      }
+      if (!isNaN(Number(output[0]))) {
+        const currentDirSize =
+          this.utils.objectGet(directory, `${currDir}.size`) ?? 0;
+        const currentFileSize = Number(output[0]) ?? 0;
+        this.utils.objectSetValue(
+          directory,
+          `${currDir}.size`,
+          currentDirSize + currentFileSize,
+        );
+        continue;
+      }
+      if (inputString[i].startsWith('$ cd')) {
+        if (output[2] == '..') {
+          updateDirSize(directory, currDir);
+          currDir = currDir.substring(0, currDir.lastIndexOf('.'));
+          currDir = currDir.substring(0, currDir.lastIndexOf('.'));
+        } else {
+          currDir = currDir + `.subDirectories.${output[2]}`;
+        }
+        continue;
+      }
+    }
+
+    return total;
+  }
+
   runProblem6Part2(inputString: string[]): number {
     const input = inputString?.[0];
 
@@ -81,7 +239,6 @@ class Solver {
           .map((entry) => Number(entry))
           .filter((entry) => !isNaN(entry));
 
-        console.log(crates, move, from, to);
         const moved = crates[from - 1].splice(0, move);
         crates[to - 1].unshift(...moved);
       } else {
@@ -364,4 +521,18 @@ class Solver {
 
     return mostCalories;
   }
+}
+
+class Utils {
+  objectSetValue(object: any, path: any, value: any) {
+    const way = path.replace(/\[/g, '.').replace(/\]/g, '').split('.'),
+      last = way.pop();
+    way.reduce(function (o: any, k: any, i: any, kk: any) {
+      return (o[k] =
+        o[k] || (isFinite(i + 1 in kk ? kk[i + 1] : last) ? [] : {}));
+    }, object)[last] = value;
+  }
+
+  objectGet = (t: any, path: string) =>
+    path.split('.').reduce((r, k) => r?.[k], t);
 }
