@@ -33,6 +33,135 @@ export class AppService {
 class Solver {
   private readonly utils = new Utils();
 
+  runProblem9Part2(inputString: string[]): number {
+    const headMovements: { direction: string; steps: number }[] =
+      inputString.map((entry) => {
+        const [direction, steps] = entry.split(' ');
+        return { direction, steps: Number(steps) };
+      });
+
+    const tailPositions = Array(10)
+      .fill(undefined)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      .map((u: any) => ({ x: 0, y: 0 }));
+    const uniquePositions = new Set<string>();
+    uniquePositions.add(`0,0`);
+
+    for (const { direction, steps } of headMovements) {
+      for (let i = 0; i < steps; i++) {
+        switch (direction) {
+          case 'R':
+            tailPositions[0].x = tailPositions[0].x + 1;
+            break;
+          case 'U':
+            tailPositions[0].y = tailPositions[0].y + 1;
+            break;
+          case 'L':
+            tailPositions[0].x = tailPositions[0].x - 1;
+            break;
+          case 'D':
+            tailPositions[0].y = tailPositions[0].y - 1;
+            break;
+        }
+
+        let currentHeadPosition;
+
+        for (let j = 1; j < tailPositions.length; j++) {
+          currentHeadPosition = tailPositions[j - 1];
+          const distance = {
+            x: currentHeadPosition.x - tailPositions[j].x,
+            y: currentHeadPosition.y - tailPositions[j].y,
+          };
+
+          if (
+            (Math.abs(distance.x) >= 2 || Math.abs(distance.y) >= 2) &&
+            currentHeadPosition.x == tailPositions[j].x
+          ) {
+            tailPositions[j].y += distance.y > 0 ? 1 : -1;
+          } else if (
+            (Math.abs(distance.x) >= 2 || Math.abs(distance.y) >= 2) &&
+            currentHeadPosition.y == tailPositions[j].y
+          ) {
+            tailPositions[j].x += distance.x > 0 ? 1 : -1;
+          } else if (
+            (currentHeadPosition.x !== tailPositions[j].x &&
+              Math.abs(distance.x) > 1) ||
+            (currentHeadPosition.y !== tailPositions[j].y &&
+              Math.abs(distance.y) > 1)
+          ) {
+            tailPositions[j].y +=
+              currentHeadPosition.y > tailPositions[j].y ? 1 : -1;
+            tailPositions[j].x +=
+              currentHeadPosition.x > tailPositions[j].x ? 1 : -1;
+          }
+          currentHeadPosition = tailPositions[j];
+        }
+        uniquePositions.add(
+          `${currentHeadPosition?.x ?? 0},${currentHeadPosition?.y ?? 0}`,
+        );
+      }
+    }
+    return uniquePositions.size;
+  }
+
+  runProblem9Part1(inputString: string[]): number {
+    const headMovements: { direction: string; steps: number }[] =
+      inputString.map((entry) => {
+        const [direction, steps] = entry.split(' ');
+        return { direction, steps: Number(steps) };
+      });
+
+    const headPosition = { x: 0, y: 0 };
+    const tailPosition = { x: 0, y: 0 };
+    const uniquePositions = new Set<string>();
+    uniquePositions.add(`${tailPosition.x},${tailPosition.y}`);
+
+    for (const { direction, steps } of headMovements) {
+      for (let i = 0; i < steps; i++) {
+        switch (direction) {
+          case 'R':
+            headPosition.x += 1;
+            break;
+          case 'U':
+            headPosition.y += 1;
+            break;
+          case 'L':
+            headPosition.x -= 1;
+            break;
+          case 'D':
+            headPosition.y -= 1;
+            break;
+        }
+
+        const distance = {
+          x: headPosition.x - tailPosition.x,
+          y: headPosition.y - tailPosition.y,
+        };
+
+        if (
+          (Math.abs(distance.x) >= 2 || Math.abs(distance.y) >= 2) &&
+          headPosition.x == tailPosition.x
+        ) {
+          tailPosition.y += distance.y > 0 ? 1 : -1;
+        } else if (
+          (Math.abs(distance.x) >= 2 || Math.abs(distance.y) >= 2) &&
+          headPosition.y == tailPosition.y
+        ) {
+          tailPosition.x += distance.x > 0 ? 1 : -1;
+        } else if (
+          (headPosition.x !== tailPosition.x && Math.abs(distance.x) > 1) ||
+          (headPosition.y !== tailPosition.y && Math.abs(distance.y) > 1)
+        ) {
+          tailPosition.y += headPosition.y > tailPosition.y ? 1 : -1;
+          tailPosition.x += headPosition.x > tailPosition.x ? 1 : -1;
+        }
+
+        uniquePositions.add(`${tailPosition.x},${tailPosition.y}`);
+      }
+    }
+    return uniquePositions.size;
+  }
+
   runProblem8Part2(inputString: string[]): number {
     let finalScore = 0;
     const reverseInput: string[] = [];
