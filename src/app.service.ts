@@ -33,6 +33,90 @@ export class AppService {
 class Solver {
   private readonly utils = new Utils();
 
+  runProblem10Part2(inputString: string[]): string {
+    const instructions: { instruction: string; value: number }[] =
+      inputString.map((entry) => {
+        const [instruction, value] = entry.split(' ');
+        return { instruction, value: Number(value) ?? 0 };
+      });
+
+    const makeArray = <T>(w: number, h: number, val: T) => {
+      const arr: T[][] = [];
+      for (let i = 0; i < h; i++) {
+        arr[i] = [];
+        for (let j = 0; j < w; j++) {
+          arr[i][j] = val;
+        }
+      }
+      return arr;
+    };
+
+    let registerX = 1;
+    let clock = 0;
+    const timestamps = [40, 80, 120, 160, 200, 240];
+    const CRT: string[][] = makeArray(40, 6, '.');
+    let j = 0;
+
+    for (const { instruction, value } of instructions) {
+      let currentOperationCycles = 0;
+
+      switch (instruction) {
+        case 'noop':
+          currentOperationCycles = 1;
+          break;
+        case 'addx':
+          currentOperationCycles = 2;
+          break;
+      }
+
+      const positions = [registerX - 1, registerX, registerX + 1];
+      for (let i = 0; i < currentOperationCycles; i++) {
+        if (positions.includes(clock % 40)) CRT[j][clock % 40] = '#';
+
+        clock += 1;
+        if (timestamps.includes(clock)) j++;
+      }
+
+      if (currentOperationCycles == 2) registerX += value;
+    }
+
+    return CRT.reduce((acc, val) => (acc += val.join('') + '\n'), '');
+  }
+
+  runProblem10Part1(inputString: string[]): number {
+    const instructions: { instruction: string; value: number }[] =
+      inputString.map((entry) => {
+        const [instruction, value] = entry.split(' ');
+        return { instruction, value: Number(value) ?? 0 };
+      });
+
+    let registerX = 1;
+    let clock = 0;
+    const timestamps = [20, 60, 100, 140, 180, 220];
+    let total = 0;
+
+    for (const { instruction, value } of instructions) {
+      let currentOperationCycles = 0;
+      switch (instruction) {
+        case 'noop':
+          currentOperationCycles = 1;
+          break;
+        case 'addx':
+          currentOperationCycles = 2;
+          break;
+      }
+
+      for (let i = 0; i < currentOperationCycles; i++) {
+        clock += 1;
+
+        if (timestamps.includes(clock)) total += clock * registerX;
+      }
+
+      if (currentOperationCycles == 2) registerX += value;
+    }
+    return total;
+  }
+
   runProblem9Part2(inputString: string[]): number {
     const headMovements: { direction: string; steps: number }[] =
       inputString.map((entry) => {
