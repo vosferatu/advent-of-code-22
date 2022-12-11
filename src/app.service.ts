@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { SlowBuffer } from 'buffer';
 import * as fs from 'fs';
 
 @Injectable()
@@ -32,6 +33,191 @@ export class AppService {
 
 class Solver {
   private readonly utils = new Utils();
+
+  runProblem11Part2(inputString: string[]): number {
+    class Monkey {
+      items: number[];
+      // eslint-disable-next-line @typescript-eslint/ban-types
+      operation: Function;
+      // eslint-disable-next-line @typescript-eslint/ban-types
+      test: Function;
+      numInspected = 0;
+
+      // eslint-disable-next-line @typescript-eslint/ban-types
+      constructor(items: number[], operation: Function, test: Function) {
+        this.items = items;
+        this.operation = operation;
+        this.test = test;
+      }
+    }
+
+    const gcd = (a: number, b: number): number => (a ? gcd(b % a, a) : b);
+
+    const lcm = (a: number, b: number): number => (a * b) / gcd(a, b);
+
+    const moduloNumbers: number[] = [];
+    const monkeys: Monkey[] = [];
+    for (let i = 0; i < inputString.length; i += 7) {
+      const startingItems = inputString[i + 1]
+        .substring(inputString[i + 1].lastIndexOf(':') + 2)
+        .split(', ')
+        .map((x: string) => Number(x));
+
+      const operators = inputString[i + 2]
+        .substring(inputString[i + 2].lastIndexOf('=') + 2)
+        .split(' ');
+
+      let operation = (a: number) => a * 0;
+      const operand = isNaN(Number(operators[2]));
+      switch (operators[1]) {
+        case '+':
+          operation = function (a: number) {
+            return a + (operand ? a : Number(operators[2]).valueOf());
+          };
+          break;
+        case '*':
+          operation = function (a: number) {
+            return a * (operand ? a : Number(operators[2]).valueOf());
+          };
+          break;
+        case '-':
+          operation = function (a: number) {
+            return a - (operand ? a : Number(operators[2]).valueOf());
+          };
+          break;
+        case '/':
+          operation = function (a: number) {
+            return Math.floor(
+              a / (operand ? a : Number(operators[2].valueOf())),
+            );
+          };
+      }
+
+      const testNumber = Number(inputString[i + 3].replace(/^\D+/g, ''));
+      const returnTrue = Number(inputString[i + 4].replace(/^\D+/g, ''));
+      const returnFalse = Number(inputString[i + 5].replace(/^\D+/g, ''));
+      moduloNumbers.push(testNumber);
+
+      monkeys.push(
+        new Monkey(startingItems, operation, (a: number) => {
+          if (a % testNumber == 0) return returnTrue.valueOf();
+
+          return returnFalse.valueOf();
+        }),
+      );
+    }
+
+    const modulo = moduloNumbers.reduce(lcm);
+
+    for (let j = 1; j < 10001; j++) {
+      for (let i = 0; i < monkeys.length; i++) {
+        while (monkeys[i].items.length > 0) {
+          let itemToInspect = monkeys[i].items.shift() ?? 0;
+          itemToInspect = monkeys[i].operation(itemToInspect);
+
+          itemToInspect = itemToInspect % modulo;
+
+          const monkeyToPassTo = monkeys[i].test(itemToInspect);
+
+          monkeys[i].numInspected += 1;
+
+          monkeys[monkeyToPassTo].items.push(itemToInspect);
+        }
+      }
+    }
+
+    monkeys.sort((a, b) => b.numInspected - a.numInspected);
+
+    return monkeys[0].numInspected * monkeys[1].numInspected;
+  }
+
+  runProblem11Part1(inputString: string[]): number {
+    class Monkey {
+      items: number[];
+      // eslint-disable-next-line @typescript-eslint/ban-types
+      operation: Function;
+      // eslint-disable-next-line @typescript-eslint/ban-types
+      test: Function;
+      numInspected = 0;
+
+      // eslint-disable-next-line @typescript-eslint/ban-types
+      constructor(items: number[], operation: Function, test: Function) {
+        this.items = items;
+        this.operation = operation;
+        this.test = test;
+      }
+    }
+
+    const monkeys: Monkey[] = [];
+    for (let i = 0; i < inputString.length; i += 7) {
+      const startingItems = inputString[i + 1]
+        .substring(inputString[i + 1].lastIndexOf(':') + 2)
+        .split(', ')
+        .map((x: string) => Number(x));
+
+      const operators = inputString[i + 2]
+        .substring(inputString[i + 2].lastIndexOf('=') + 2)
+        .split(' ');
+
+      let operation = (a: number) => a * 0;
+      const operand = isNaN(Number(operators[2]));
+      switch (operators[1]) {
+        case '+':
+          operation = function (a: number) {
+            return a + (operand ? a : Number(operators[2]).valueOf());
+          };
+          break;
+        case '*':
+          operation = function (a: number) {
+            return a * (operand ? a : Number(operators[2]).valueOf());
+          };
+          break;
+        case '-':
+          operation = function (a: number) {
+            return a - (operand ? a : Number(operators[2]).valueOf());
+          };
+          break;
+        case '/':
+          operation = function (a: number) {
+            return Math.floor(
+              a / (operand ? a : Number(operators[2].valueOf())),
+            );
+          };
+      }
+
+      const testNumber = Number(inputString[i + 3].replace(/^\D+/g, ''));
+      const returnTrue = Number(inputString[i + 4].replace(/^\D+/g, ''));
+      const returnFalse = Number(inputString[i + 5].replace(/^\D+/g, ''));
+
+      monkeys.push(
+        new Monkey(startingItems, operation, (a: number) => {
+          if (a % testNumber == 0) return returnTrue.valueOf();
+
+          return returnFalse.valueOf();
+        }),
+      );
+    }
+
+    for (let j = 0; j < 20; j++) {
+      for (let i = 0; i < monkeys.length; i++) {
+        while (monkeys[i].items.length > 0) {
+          let itemToInspect = monkeys[i].items.shift() ?? 0;
+          itemToInspect = monkeys[i].operation(itemToInspect);
+          itemToInspect = Math.floor(itemToInspect / 3);
+
+          const monkeyToPassTo = monkeys[i].test(itemToInspect);
+
+          monkeys[i].numInspected += 1;
+
+          monkeys[monkeyToPassTo].items.push(itemToInspect);
+        }
+      }
+    }
+
+    monkeys.sort((a, b) => b.numInspected - a.numInspected);
+
+    return monkeys[0].numInspected * monkeys[1].numInspected;
+  }
 
   runProblem10Part2(inputString: string[]): string {
     const instructions: { instruction: string; value: number }[] =
