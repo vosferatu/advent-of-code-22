@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { SlowBuffer } from 'buffer';
 import * as fs from 'fs';
-import { start } from 'repl';
 
 @Injectable()
 export class AppService {
@@ -34,6 +32,90 @@ export class AppService {
 
 class Solver {
   private readonly utils = new Utils();
+
+  runProblem13Part2(inputString: string[]): number {
+    const input = inputString.filter((str) => str.length);
+    input.push('[[6]]', '[[2]]');
+
+    const isNumber = (x: any): boolean => {
+      return !Array.isArray(x) && !isNaN(x);
+    };
+
+    const pairInOrder = (first: any, second: any): boolean | undefined => {
+      while (first.length && second.length) {
+        const left = first.shift();
+        const right = second.shift();
+
+        if (isNumber(left) && isNumber(right)) {
+          if (left < right) return true;
+          else if (left > right) return false;
+        } else if (Array.isArray(left) && Array.isArray(right)) {
+          const result = pairInOrder(left, right);
+          if (typeof result == 'boolean') return result;
+        } else if (isNumber(left) && Array.isArray(right)) {
+          const result = pairInOrder([left], right);
+          if (typeof result == 'boolean') return result;
+        } else if (Array.isArray(left) && isNumber(right)) {
+          const result = pairInOrder(left, [right]);
+          if (typeof result == 'boolean') return result;
+        }
+      }
+
+      if (first.length) return false;
+      if (second.length) return true;
+
+      return undefined;
+    };
+
+    input.sort((a, b) => (pairInOrder(eval(a), eval(b)) ? -1 : 1));
+
+    return (
+      (input.findIndex((x) => x == '[[6]]') + 1) *
+      (input.findIndex((x) => x == '[[2]]') + 1)
+    );
+  }
+
+  runProblem13Part1(inputString: string[]): number {
+    const isNumber = (x: any): boolean => {
+      return !Array.isArray(x) && !isNaN(x);
+    };
+
+    const pairInOrder = (first: any, second: any): boolean | undefined => {
+      while (first.length && second.length) {
+        const left = first.shift();
+        const right = second.shift();
+
+        if (isNumber(left) && isNumber(right)) {
+          if (left < right) return true;
+          else if (left > right) return false;
+        } else if (Array.isArray(left) && Array.isArray(right)) {
+          const result = pairInOrder(left, right);
+          if (typeof result == 'boolean') return result;
+        } else if (isNumber(left) && Array.isArray(right)) {
+          const result = pairInOrder([left], right);
+          if (typeof result == 'boolean') return result;
+        } else if (Array.isArray(left) && isNumber(right)) {
+          const result = pairInOrder(left, [right]);
+          if (typeof result == 'boolean') return result;
+        }
+      }
+
+      if (first.length) return false;
+      if (second.length) return true;
+
+      return undefined;
+    };
+
+    let numOrdered = 0;
+    for (let i = 0; i < inputString.length; i += 3) {
+      const pair1 = eval(inputString[i]);
+      const pair2 = eval(inputString[i + 1]);
+
+      if (pairInOrder(pair1, pair2)) numOrdered += i / 3 + 1;
+    }
+
+    return numOrdered;
+  }
 
   runProblem12Part2(inputString: string[]): number {
     let end = { x: 0, y: 0 };
