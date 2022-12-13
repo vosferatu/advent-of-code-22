@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { SlowBuffer } from 'buffer';
 import * as fs from 'fs';
+import { start } from 'repl';
 
 @Injectable()
 export class AppService {
@@ -33,6 +34,166 @@ export class AppService {
 
 class Solver {
   private readonly utils = new Utils();
+
+  runProblem12Part2(inputString: string[]): number {
+    let end = { x: 0, y: 0 };
+
+    const reverseInput: string[] = [];
+    for (let i = 0; i < inputString[0].length; i++) {
+      let columnString = '';
+      for (let j = 0; j < inputString.length; j++) {
+        columnString += inputString[j][i];
+      }
+      reverseInput.push(columnString);
+    }
+
+    const grid = reverseInput.map((str) => str.split(''));
+    const startPositions: {
+      x: number;
+      y: number;
+    }[] = [];
+
+    for (let i = 0; i < grid.length; i++) {
+      for (let j = 0; j < grid[i].length; j++) {
+        if (grid[i][j] == 'S') {
+          startPositions.push({ x: i, y: j });
+          grid[i][j] = 'a';
+        }
+        if (grid[i][j] == 'E') {
+          end = { x: i, y: j };
+          grid[i][j] = 'z';
+        }
+        if (grid[i][j] == 'a') {
+          startPositions.push({ x: i, y: j });
+        }
+      }
+    }
+
+    const queue = [end];
+    const visited = grid.map((x) => x.map(() => false));
+    const paths = grid.map((x) => x.map(() => Infinity));
+    paths[end.x][end.y] = 0;
+
+    while (queue.length > 0) {
+      const currentPosition = queue.shift() ?? end;
+      visited[currentPosition.x][currentPosition.y] = true;
+
+      let adjacents = [
+        { x: currentPosition.x, y: currentPosition.y - 1 },
+        { x: currentPosition.x, y: currentPosition.y + 1 },
+        { x: currentPosition.x - 1, y: currentPosition.y },
+        { x: currentPosition.x + 1, y: currentPosition.y },
+      ];
+
+      adjacents = adjacents.filter((adjacent) => {
+        return grid[adjacent.x]?.[adjacent.y] !== undefined;
+      });
+
+      adjacents.forEach((adjacent) => {
+        const currentHeight = grid[currentPosition.x][currentPosition.y];
+        const nextHeight = grid[adjacent.x][adjacent.y];
+
+        if (currentHeight.charCodeAt(0) >= nextHeight.charCodeAt(0) - 1) {
+          const shortestDist = paths[adjacent.x][adjacent.y] + 1;
+          const currShortestDist = paths[currentPosition.x][currentPosition.y];
+
+          paths[currentPosition.x][currentPosition.y] = Math.min(
+            currShortestDist,
+            shortestDist,
+          );
+        }
+
+        if (
+          !visited[adjacent.x][adjacent.y] &&
+          currentHeight.charCodeAt(0) <= nextHeight.charCodeAt(0) + 1
+        ) {
+          queue.push(adjacent);
+          visited[adjacent.x][adjacent.y] = true;
+        }
+      });
+    }
+
+    return Math.min(...startPositions.map((start) => paths[start.x][start.y]));
+  }
+
+  runProblem12Part1(inputString: string[]): number {
+    let end = { x: 0, y: 0 };
+    let me = { x: 0, y: 0 };
+
+    const reverseInput: string[] = [];
+    for (let i = 0; i < inputString[0].length; i++) {
+      let columnString = '';
+      for (let j = 0; j < inputString.length; j++) {
+        columnString += inputString[j][i];
+      }
+      reverseInput.push(columnString);
+    }
+
+    const grid = reverseInput.map((str) => str.split(''));
+
+    let doneAnalyzing = 0;
+    for (let i = 0; i < grid.length; i++) {
+      for (let j = 0; j < grid[i].length; j++) {
+        if (grid[i][j] == 'S') {
+          me = { x: i, y: j };
+          grid[i][j] = 'a';
+          doneAnalyzing++;
+        }
+        if (grid[i][j] == 'E') {
+          end = { x: i, y: j };
+          grid[i][j] = 'z';
+          doneAnalyzing++;
+        }
+        if (doneAnalyzing == 2) break;
+      }
+    }
+
+    const queue = [end];
+    const visited = grid.map((x) => x.map(() => false));
+    const paths = grid.map((x) => x.map(() => Infinity));
+    paths[end.x][end.y] = 0;
+
+    while (queue.length > 0) {
+      const currentPosition = queue.shift() ?? end;
+      visited[currentPosition.x][currentPosition.y] = true;
+
+      let adjacents = [
+        { x: currentPosition.x, y: currentPosition.y - 1 },
+        { x: currentPosition.x, y: currentPosition.y + 1 },
+        { x: currentPosition.x - 1, y: currentPosition.y },
+        { x: currentPosition.x + 1, y: currentPosition.y },
+      ];
+
+      adjacents = adjacents.filter((adjacent) => {
+        return grid[adjacent.x]?.[adjacent.y] !== undefined;
+      });
+
+      adjacents.forEach((adjacent) => {
+        const currentHeight = grid[currentPosition.x][currentPosition.y];
+        const nextHeight = grid[adjacent.x][adjacent.y];
+
+        if (currentHeight.charCodeAt(0) >= nextHeight.charCodeAt(0) - 1) {
+          const shortestDist = paths[adjacent.x][adjacent.y] + 1;
+          const currShortestDist = paths[currentPosition.x][currentPosition.y];
+
+          paths[currentPosition.x][currentPosition.y] = Math.min(
+            currShortestDist,
+            shortestDist,
+          );
+        }
+
+        if (
+          !visited[adjacent.x][adjacent.y] &&
+          currentHeight.charCodeAt(0) <= nextHeight.charCodeAt(0) + 1
+        ) {
+          queue.push(adjacent);
+          visited[adjacent.x][adjacent.y] = true;
+        }
+      });
+    }
+
+    return paths[me.x][me.y];
+  }
 
   runProblem11Part2(inputString: string[]): number {
     class Monkey {
