@@ -33,6 +33,130 @@ export class AppService {
 class Solver {
   private readonly utils = new Utils();
 
+  runProblem14Part1(inputString: string[]): number {
+    class Coordinate {
+      constructor(public x: number, public y: number) {}
+    }
+
+    let coordinates: Coordinate[][] = [];
+    let largestX = 0;
+    let smallestX = Infinity;
+    let largestY = 0;
+    let smallestY = Infinity;
+
+    for (let i = 0; i < inputString.length; i++) {
+      const lineCoordinates = inputString[i]
+        .split(' -> ')
+        .map((str) => str.split(','))
+        .map((pair) => new Coordinate(Number(pair[0]), Number(pair[1])));
+
+      coordinates.push(lineCoordinates);
+
+      largestX = Math.max(largestX, ...lineCoordinates.map((x) => x.x));
+      smallestX = Math.min(smallestX, ...lineCoordinates.map((x) => x.x));
+      largestY = Math.max(largestY, ...lineCoordinates.map((x) => x.y));
+      smallestY = Math.min(smallestY, ...lineCoordinates.map((x) => x.y));
+    }
+
+    coordinates = coordinates.map((outer) =>
+      outer.map((x) => new Coordinate(x.x - smallestX, x.y)),
+    );
+
+    const sandDrip = new Coordinate(500 - smallestX, 0);
+
+    const grid: string[][] = new Array<string[]>(largestX - smallestX + 1);
+    for (let i = 0; i < grid.length; i++) {
+      grid[i] = new Array<string>(largestY + 1).fill('.');
+    }
+
+    for (let i = 0; i < coordinates.length; i++) {
+      for (let j = 0; j < coordinates[i].length - 1; j++) {
+        if (coordinates[i][j].x === coordinates[i][j + 1].x) {
+          const ys = Array.from(
+            new Array(
+              Math.abs(coordinates[i][j + 1].y - coordinates[i][j].y) + 1,
+            ),
+            (x, k) =>
+              k +
+              (coordinates[i][j].y > coordinates[i][j + 1].y
+                ? coordinates[i][j + 1].y
+                : coordinates[i][j].y),
+          );
+
+          ys.forEach((y: number) => (grid[coordinates[i][j].x][y] = '#'));
+          continue;
+        }
+
+        if (coordinates[i][j].y === coordinates[i][j + 1].y) {
+          const xs = Array.from(
+            new Array(
+              Math.abs(coordinates[i][j + 1].x - coordinates[i][j].x) + 1,
+            ),
+            (x, k) =>
+              k +
+              (coordinates[i][j].x > coordinates[i][j + 1].x
+                ? coordinates[i][j + 1].x
+                : coordinates[i][j].x),
+          );
+
+          xs.forEach((x: number) => (grid[x][coordinates[i][j].y] = '#'));
+        }
+      }
+    }
+
+    grid[sandDrip.x][sandDrip.y] = '+';
+    let atRest = 0;
+    let voidFlow = false;
+    const movingSand = new Coordinate(sandDrip.x, sandDrip.y + 1);
+
+    while (!voidFlow) {
+      if (
+        grid?.[movingSand.x]?.[movingSand.y + 1] &&
+        grid?.[movingSand.x]?.[movingSand.y + 1] == '.'
+      ) {
+        movingSand.x = movingSand.x;
+        movingSand.y = movingSand.y + 1;
+        continue;
+      } else if (
+        grid?.[movingSand.x - 1]?.[movingSand.y + 1] &&
+        grid?.[movingSand.x - 1]?.[movingSand.y + 1] == '.'
+      ) {
+        movingSand.x = movingSand.x - 1;
+        movingSand.y = movingSand.y + 1;
+        continue;
+      } else if (
+        grid?.[movingSand.x + 1]?.[movingSand.y + 1] &&
+        grid?.[movingSand.x + 1]?.[movingSand.y + 1] == '.'
+      ) {
+        movingSand.x = movingSand.x + 1;
+        movingSand.y = movingSand.y + 1;
+        continue;
+      }
+
+      if (
+        !grid?.[movingSand.x + 1]?.[movingSand.y + 1] ||
+        !grid?.[movingSand.x - 1]?.[movingSand.y + 1] ||
+        !grid?.[movingSand.x]?.[movingSand.y + 1]
+      ) {
+        voidFlow = true;
+        continue;
+      }
+
+      if (movingSand.x === sandDrip.x && movingSand.y === sandDrip.y) {
+        voidFlow = true;
+        continue;
+      }
+
+      grid[movingSand.x][movingSand.y] = 'o';
+
+      atRest++;
+      movingSand.x = sandDrip.x;
+      movingSand.y = sandDrip.y;
+    }
+
+    return atRest;
+  }
+
   runProblem13Part2(inputString: string[]): number {
     const input = inputString.filter((str) => str.length);
     input.push('[[6]]', '[[2]]');
