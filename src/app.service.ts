@@ -33,6 +33,131 @@ export class AppService {
 class Solver {
   private readonly utils = new Utils();
 
+  runProblem14Part2(inputString: string[]): number {
+    class Coordinate {
+      constructor(public x: number, public y: number) {}
+    }
+
+    const coordinates: Coordinate[][] = [];
+    let largestX = 0;
+    let smallestX = Infinity;
+    let largestY = 0;
+    let smallestY = Infinity;
+
+    for (let i = 0; i < inputString.length; i++) {
+      const lineCoordinates = inputString[i]
+        .split(' -> ')
+        .map((str) => str.split(','))
+        .map((pair) => new Coordinate(Number(pair[0]), Number(pair[1])));
+
+      coordinates.push(lineCoordinates);
+
+      largestX = Math.max(largestX, ...lineCoordinates.map((x) => x.x));
+      smallestX = Math.min(smallestX, ...lineCoordinates.map((x) => x.x));
+      largestY = Math.max(largestY, ...lineCoordinates.map((x) => x.y));
+      smallestY = Math.min(smallestY, ...lineCoordinates.map((x) => x.y));
+    }
+
+    const grid: string[][] = new Array<string[]>(largestY + 3);
+    for (let i = 0; i < grid.length; i++) {
+      grid[i] = new Array<string>(2 * largestX).fill('.');
+    }
+
+    coordinates.push([
+      new Coordinate(0, largestY + 2),
+      new Coordinate(2 * largestX, largestY + 2),
+    ]);
+
+    for (let i = 0; i < coordinates.length; i++) {
+      for (let j = 0; j < coordinates[i].length - 1; j++) {
+        if (coordinates[i][j].x === coordinates[i][j + 1].x) {
+          const ys = Array.from(
+            new Array(
+              Math.abs(coordinates[i][j + 1].y - coordinates[i][j].y) + 1,
+            ),
+            (x, k) =>
+              k +
+              (coordinates[i][j].y > coordinates[i][j + 1].y
+                ? coordinates[i][j + 1].y
+                : coordinates[i][j].y),
+          );
+
+          ys.forEach((y: number) => (grid[y][coordinates[i][j].x] = '#'));
+          continue;
+        }
+
+        if (coordinates[i][j].y === coordinates[i][j + 1].y) {
+          const xs = Array.from(
+            new Array(
+              Math.abs(coordinates[i][j + 1].x - coordinates[i][j].x) + 1,
+            ),
+            (x, k) =>
+              k +
+              (coordinates[i][j].x > coordinates[i][j + 1].x
+                ? coordinates[i][j + 1].x
+                : coordinates[i][j].x),
+          );
+
+          xs.forEach((x: number) => (grid[coordinates[i][j].y][x] = '#'));
+        }
+      }
+    }
+
+    const sandDrip = new Coordinate(500, 0);
+    grid[sandDrip.y][sandDrip.x] = '+';
+    let atRest = 0;
+    let voidFlow = false;
+    const movingSand = new Coordinate(sandDrip.x, sandDrip.y + 1);
+
+    while (!voidFlow) {
+      if (
+        grid?.[movingSand.y + 1]?.[movingSand.x] &&
+        grid?.[movingSand.y + 1]?.[movingSand.x] == '.'
+      ) {
+        movingSand.x = movingSand.x;
+        movingSand.y = movingSand.y + 1;
+        continue;
+      } else if (
+        grid?.[movingSand.y + 1]?.[movingSand.x - 1] &&
+        grid?.[movingSand.y + 1]?.[movingSand.x - 1] == '.'
+      ) {
+        movingSand.x = movingSand.x - 1;
+        movingSand.y = movingSand.y + 1;
+        continue;
+      } else if (
+        grid?.[movingSand.y + 1]?.[movingSand.x + 1] &&
+        grid?.[movingSand.y + 1]?.[movingSand.x + 1] == '.'
+      ) {
+        movingSand.x = movingSand.x + 1;
+        movingSand.y = movingSand.y + 1;
+        continue;
+      }
+
+      if (
+        !grid?.[movingSand.y + 1]?.[movingSand.x + 1] ||
+        !grid?.[movingSand.y + 1]?.[movingSand.x - 1] ||
+        !grid?.[movingSand.y]?.[movingSand.x + 1]
+      ) {
+        voidFlow = true;
+        continue;
+      }
+
+      if (movingSand.x === sandDrip.x && movingSand.y === sandDrip.y) {
+        voidFlow = true;
+        atRest++;
+        continue;
+      }
+
+      grid[movingSand.y][movingSand.x] = 'o';
+
+      atRest++;
+      movingSand.x = sandDrip.x;
+      movingSand.y = sandDrip.y;
+    }
+
+    return atRest;
+  }
+
   runProblem14Part1(inputString: string[]): number {
     class Coordinate {
       constructor(public x: number, public y: number) {}
