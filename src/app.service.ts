@@ -33,6 +33,152 @@ export class AppService {
 class Solver {
   private readonly utils = new Utils();
 
+  runProblem15Part2(inputString: string[]) {
+    class Coordinate {
+      constructor(public x: number, public y: number) {}
+
+      inBound(bound: number): boolean {
+        return this.x > 0 && this.x < bound && this.y > 0 && this.y < bound;
+      }
+    }
+
+    class Pair {
+      constructor(public sensor: Coordinate, public beacon: Coordinate) {}
+    }
+
+    const manhattanDistance = (a: Coordinate, b: Coordinate) => {
+      return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+    };
+
+    const bound = 4_000_000; // 20; // for demo
+    const pairs: Pair[] = [];
+
+    for (let i = 0; i < inputString.length; i++) {
+      const [sensor, beacon] = inputString[i].split(':');
+      const sensorX = sensor.substring(
+        sensor.indexOf('x=') + 2,
+        sensor.indexOf(','),
+      );
+      const sensorY = sensor.substring(sensor.indexOf('y=') + 2);
+      const beaconX = beacon.substring(
+        beacon.indexOf('x=') + 2,
+        beacon.indexOf(','),
+      );
+      const beaconY = beacon.substring(beacon.indexOf('y=') + 2);
+
+      const pair = new Pair(
+        new Coordinate(Number(sensorX), Number(sensorY)),
+        new Coordinate(Number(beaconX), Number(beaconY)),
+      );
+
+      pairs.push(pair);
+    }
+
+    const radius = pairs.map((pair) =>
+      manhattanDistance(pair.sensor, pair.beacon),
+    );
+    // y = m*x + b, m -> gradient
+    const gradientLinesPositive: number[] = [];
+    const gradientLinesNegative: number[] = [];
+
+    for (let i = 0; i < radius.length; i++) {
+      gradientLinesPositive.push(
+        pairs[i].sensor.y - pairs[i].sensor.x + radius[i] + 1,
+      );
+      gradientLinesPositive.push(
+        pairs[i].sensor.y - pairs[i].sensor.x - radius[i] - 1,
+      );
+      gradientLinesNegative.push(
+        pairs[i].sensor.x + pairs[i].sensor.y + radius[i] + 1,
+      );
+      gradientLinesNegative.push(
+        pairs[i].sensor.x + pairs[i].sensor.y - radius[i] - 1,
+      );
+    }
+
+    for (const positiveGradient of gradientLinesPositive) {
+      for (const negativeGradient of gradientLinesNegative) {
+        const intersection = new Coordinate(
+          Math.floor((negativeGradient - positiveGradient) / 2),
+          Math.floor((negativeGradient + positiveGradient) / 2),
+        );
+
+        if (intersection.inBound(bound)) {
+          if (
+            pairs.every(
+              (pair) =>
+                manhattanDistance(intersection, pair.sensor) >
+                manhattanDistance(pair.sensor, pair.beacon),
+            )
+          )
+            return 4_000_000 * intersection.x + intersection.y;
+        }
+      }
+    }
+
+    return 0;
+  }
+
+  runProblem15Part1(inputString: string[]) {
+    class Coordinate {
+      constructor(public x: number, public y: number) {}
+    }
+
+    class Pair {
+      constructor(public sensor: Coordinate, public beacon: Coordinate) {}
+    }
+
+    const specifiedRow = 2_000_000;
+    const pairs: Pair[] = [];
+    const signals: Set<number> = new Set();
+
+    for (let i = 0; i < inputString.length; i++) {
+      const [sensor, beacon] = inputString[i].split(':');
+      const sensorX = sensor.substring(
+        sensor.indexOf('x=') + 2,
+        sensor.indexOf(','),
+      );
+      const sensorY = sensor.substring(sensor.indexOf('y=') + 2);
+      const beaconX = beacon.substring(
+        beacon.indexOf('x=') + 2,
+        beacon.indexOf(','),
+      );
+      const beaconY = beacon.substring(beacon.indexOf('y=') + 2);
+
+      const pair = new Pair(
+        new Coordinate(Number(sensorX), Number(sensorY)),
+        new Coordinate(Number(beaconX), Number(beaconY)),
+      );
+
+      pairs.push(pair);
+    }
+
+    for (const { sensor, beacon } of pairs) {
+      const manhattanDistance =
+        Math.abs(beacon.x - sensor.x) + Math.abs(beacon.y - sensor.y);
+
+      if (
+        specifiedRow > manhattanDistance + sensor.y &&
+        specifiedRow < sensor.y - manhattanDistance
+      )
+        continue;
+
+      const rownManhattanDistance =
+        specifiedRow > sensor.y
+          ? sensor.y + manhattanDistance - specifiedRow
+          : specifiedRow - (sensor.y - manhattanDistance);
+
+      for (
+        let x = sensor.x - rownManhattanDistance;
+        x < sensor.x + rownManhattanDistance;
+        x++
+      )
+        signals.add(x);
+    }
+
+    return signals.size;
+  }
+
   runProblem14Part2(inputString: string[]): number {
     class Coordinate {
       constructor(public x: number, public y: number) {}
