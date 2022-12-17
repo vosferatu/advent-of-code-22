@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { time } from 'console';
 import * as fs from 'fs';
+import { find } from 'rxjs';
 
 @Injectable()
 export class AppService {
@@ -32,6 +34,256 @@ export class AppService {
 
 class Solver {
   private readonly utils = new Utils();
+
+  runProblem16Part2(inputString: string[]) {
+    class Valve {
+      public open = false;
+      public flows = true;
+
+      constructor(
+        public name: string,
+        public rate: number,
+        public tunnels: string[],
+      ) {
+        if (rate <= 0) this.flows = false;
+      }
+    }
+
+    const valves: Record<string, Valve> = {};
+    const shortestPaths: Record<string, number> = {};
+    const nodesWithFlow = new Array<string>();
+    const flowNodeIndexes: Record<string, number> = {};
+
+    for (let i = 0; i < inputString.length; i++) {
+      const [valveInfo, tunnels] = inputString[i].split(';');
+      const [valveName] = valveInfo.substring(1).match(/([A-Z][A-Z]+)/g) ?? [
+        '',
+      ];
+      const valveRate = Number(valveInfo.substring(valveInfo.indexOf('=') + 1));
+      const valveTunnels = tunnels.match(/([A-Z][A-Z]+)/g) ?? [];
+      const newValve = new Valve(valveName ?? '', valveRate, valveTunnels);
+
+      shortestPaths[`${valveName}:${valveName}`] = 0;
+      for (const to of valveTunnels) {
+        shortestPaths[`${valveName}:${to}`] = 1;
+      }
+
+      if (valveRate > 0) {
+        nodesWithFlow.push(valveName);
+        flowNodeIndexes[valveName] = nodesWithFlow.length;
+      }
+
+      valves[valveName] = newValve;
+    }
+
+    for (const currNode of Object.keys(valves)) {
+      for (const leftNode of Object.keys(valves)) {
+        for (const rightNode of Object.keys(valves)) {
+          shortestPaths[`${leftNode}:${rightNode}`] = Math.min(
+            shortestPaths[`${leftNode}:${rightNode}`] ?? 1e6,
+            (shortestPaths[`${leftNode}:${currNode}`] ?? 1e6) +
+              (shortestPaths[`${currNode}:${rightNode}`] ?? 1e6),
+          );
+        }
+      }
+    }
+
+    function addOpen(current: number, node: string): number {
+      const openValve = 1 << flowNodeIndexes[node];
+      return current | openValve;
+    }
+
+    function isOpen(current: number, node: string): boolean {
+      const openValve = 1 << flowNodeIndexes[node];
+
+      const isOpenNum = current & openValve;
+      return isOpenNum > 0;
+    }
+
+    type Item = {
+      openValves: number;
+      timeLeft: number;
+      currentValve: string;
+      totalFlow: number;
+    };
+
+    const graphSearch = (totalTime: number, onVisit: (item: Item) => void) => {
+      const pathScore: Array<Item> = [];
+      pathScore.push({
+        currentValve: 'AA',
+        timeLeft: totalTime,
+        openValves: 0,
+        totalFlow: 0,
+      });
+      const visited = new Set<string>();
+      while (pathScore.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const item = pathScore.pop()!;
+        const { openValves, timeLeft, currentValve, totalFlow } = item;
+        const visitedKey = `${currentValve}:${timeLeft}:${openValves}:${totalFlow}`;
+        if (visited.has(visitedKey)) continue;
+        visited.add(visitedKey);
+
+        onVisit(item);
+
+        if (timeLeft === 0) {
+          continue;
+        }
+
+        for (const next of nodesWithFlow) {
+          if (isOpen(openValves, next)) continue;
+          const nextRemaining =
+            timeLeft - shortestPaths[`${currentValve}:${next}`] - 1;
+          if (nextRemaining <= 0) continue;
+          pathScore.push({
+            currentValve: next,
+            openValves: addOpen(openValves, next),
+            timeLeft: nextRemaining,
+            totalFlow: totalFlow + nextRemaining * valves[next].rate,
+          });
+        }
+      }
+    };
+
+    let pressure = 0;
+
+    const status26 = new Map<number, number>();
+    graphSearch(26, (item) => {
+      status26.set(
+        item.openValves,
+        Math.max(status26.get(item.openValves) ?? 0, item.totalFlow),
+      );
+    });
+
+    for (const [openValves1, totalFlow1] of status26) {
+      for (const [openValves2, totalFlow2] of status26) {
+        const overlap = openValves1 & openValves2;
+        if (overlap !== 0) continue;
+        pressure = Math.max(pressure, totalFlow1 + totalFlow2);
+      }
+    }
+
+    return pressure;
+  }
+
+  runProblem16Part1(inputString: string[]) {
+    class Valve {
+      public open = false;
+      public flows = true;
+
+      constructor(
+        public name: string,
+        public rate: number,
+        public tunnels: string[],
+      ) {
+        if (rate <= 0) this.flows = false;
+      }
+    }
+
+    const valves: Record<string, Valve> = {};
+    const shortestPaths: Record<string, number> = {};
+    const nodesWithFlow = new Array<string>();
+    const flowNodeIndexes: Record<string, number> = {};
+
+    for (let i = 0; i < inputString.length; i++) {
+      const [valveInfo, tunnels] = inputString[i].split(';');
+      const [valveName] = valveInfo.substring(1).match(/([A-Z][A-Z]+)/g) ?? [
+        '',
+      ];
+      const valveRate = Number(valveInfo.substring(valveInfo.indexOf('=') + 1));
+      const valveTunnels = tunnels.match(/([A-Z][A-Z]+)/g) ?? [];
+      const newValve = new Valve(valveName ?? '', valveRate, valveTunnels);
+
+      shortestPaths[`${valveName}:${valveName}`] = 0;
+      for (const to of valveTunnels) {
+        shortestPaths[`${valveName}:${to}`] = 1;
+      }
+
+      if (valveRate > 0) {
+        nodesWithFlow.push(valveName);
+        flowNodeIndexes[valveName] = nodesWithFlow.length;
+      }
+
+      valves[valveName] = newValve;
+    }
+
+    for (const currNode of Object.keys(valves)) {
+      for (const leftNode of Object.keys(valves)) {
+        for (const rightNode of Object.keys(valves)) {
+          shortestPaths[`${leftNode}:${rightNode}`] = Math.min(
+            shortestPaths[`${leftNode}:${rightNode}`] ?? 1e6,
+            (shortestPaths[`${leftNode}:${currNode}`] ?? 1e6) +
+              (shortestPaths[`${currNode}:${rightNode}`] ?? 1e6),
+          );
+        }
+      }
+    }
+
+    function addOpen(current: number, node: string): number {
+      const openValve = 1 << flowNodeIndexes[node];
+      return current | openValve;
+    }
+
+    function isOpen(current: number, node: string): boolean {
+      const openValve = 1 << flowNodeIndexes[node];
+
+      const isOpenNum = current & openValve;
+      return isOpenNum > 0;
+    }
+
+    type Item = {
+      openValves: number;
+      timeLeft: number;
+      currentValve: string;
+      totalFlow: number;
+    };
+
+    const graphSearch = (totalTime: number, onVisit: (item: Item) => void) => {
+      const pathScore: Array<Item> = [];
+      pathScore.push({
+        currentValve: 'AA',
+        timeLeft: totalTime,
+        openValves: 0,
+        totalFlow: 0,
+      });
+      const visited = new Set<string>();
+      while (pathScore.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const item = pathScore.pop()!;
+        const { openValves, timeLeft, currentValve, totalFlow } = item;
+        const visitedKey = `${currentValve}:${timeLeft}:${openValves}:${totalFlow}`;
+        if (visited.has(visitedKey)) continue;
+        visited.add(visitedKey);
+
+        onVisit(item);
+
+        if (timeLeft === 0) {
+          continue;
+        }
+
+        for (const next of nodesWithFlow) {
+          if (isOpen(openValves, next)) continue;
+          const nextRemaining =
+            timeLeft - shortestPaths[`${currentValve}:${next}`] - 1;
+          if (nextRemaining <= 0) continue;
+          pathScore.push({
+            currentValve: next,
+            openValves: addOpen(openValves, next),
+            timeLeft: nextRemaining,
+            totalFlow: totalFlow + nextRemaining * valves[next].rate,
+          });
+        }
+      }
+    };
+
+    let pressure = 0;
+
+    graphSearch(30, (item) => {
+      pressure = Math.max(item.totalFlow, pressure);
+    });
+
+    return pressure;
+  }
 
   runProblem15Part2(inputString: string[]) {
     class Coordinate {
