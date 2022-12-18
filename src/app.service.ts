@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { time } from 'console';
 import * as fs from 'fs';
-import { find } from 'rxjs';
 
 @Injectable()
 export class AppService {
@@ -34,6 +32,285 @@ export class AppService {
 
 class Solver {
   private readonly utils = new Utils();
+
+  runProblem17Part2(inputString: string[]) {
+    const jetPattern = inputString[0];
+
+    class Coordinate {
+      add(x: number, y: number) {
+        this.x += x;
+        this.y += y;
+      }
+
+      copy(): Coordinate {
+        return new Coordinate(this.x, this.y);
+      }
+
+      constructor(public x: number, public y: number) {}
+    }
+    class Shape {
+      copy(): Shape {
+        return new Shape(this.coordinates.map((x) => x.copy()));
+      }
+      constructor(public coordinates: Coordinate[]) {}
+    }
+
+    const shapes: Shape[] = [
+      new Shape([
+        new Coordinate(0, 0),
+        new Coordinate(1, 0),
+        new Coordinate(2, 0),
+        new Coordinate(3, 0),
+      ]),
+      new Shape([
+        new Coordinate(1, 2),
+        new Coordinate(0, 1),
+        new Coordinate(1, 1),
+        new Coordinate(2, 1),
+        new Coordinate(1, 0),
+      ]),
+      new Shape([
+        new Coordinate(2, 2),
+        new Coordinate(2, 1),
+        new Coordinate(2, 0),
+        new Coordinate(1, 0),
+        new Coordinate(0, 0),
+      ]),
+      new Shape([
+        new Coordinate(0, 0),
+        new Coordinate(0, 1),
+        new Coordinate(0, 2),
+        new Coordinate(0, 3),
+      ]),
+      new Shape([
+        new Coordinate(0, 0),
+        new Coordinate(1, 0),
+        new Coordinate(0, 1),
+        new Coordinate(1, 1),
+      ]),
+    ];
+
+    const chamberWidth = 7;
+    const resting = new Set<string>();
+    const getHeight = (world: Set<string>) =>
+      [...world]
+        .map((coord) => parseInt(coord.split(',')[1]))
+        .reduce((max, height) => Math.max(max, height), -1);
+
+    const collisions = (rock: Shape, moveX: number, moveY: number): boolean => {
+      rock.coordinates = rock.coordinates.map(
+        (x) => new Coordinate(x.x + moveX, x.y + moveY),
+      );
+
+      return rock.coordinates.some((c) => {
+        if (resting.has(`${c.x},${c.y}`)) return true;
+      });
+    };
+
+    const rockFall = (pattern: string, numberOfRocks: number): number => {
+      let rockNumber = 0;
+      let patternMove = 0;
+      let addedHeight = 0;
+      const previousStates: any = {};
+
+      while (rockNumber < numberOfRocks) {
+        let atRest = false;
+        const nextRock = shapes[rockNumber % shapes.length].copy();
+
+        const highestY = getHeight(resting);
+
+        nextRock.coordinates.forEach((coordinate) =>
+          coordinate.add(2, 3 + (highestY < 0 ? 0 : highestY + 1)),
+        );
+
+        while (!atRest) {
+          const nextJet = pattern[patternMove] == '<' ? -1 : 1;
+          patternMove++;
+          if (patternMove > pattern.length - 1) patternMove = 0;
+
+          const shapeXmax = Math.max(...nextRock.coordinates.map((x) => x.x));
+          const shapeXmin = Math.min(...nextRock.coordinates.map((x) => x.x));
+          const shapeY = Math.max(...nextRock.coordinates.map((x) => x.y));
+
+          if (
+            shapeXmin + nextJet >= 0 &&
+            shapeXmax + nextJet < chamberWidth &&
+            !collisions(nextRock.copy(), nextJet, 0)
+          ) {
+            nextRock.coordinates.forEach((coordinate) =>
+              coordinate.add(nextJet, 0),
+            );
+          }
+
+          if (shapeY - 1 >= 0 && !collisions(nextRock.copy(), 0, -1)) {
+            nextRock.coordinates.forEach((coordinate) => coordinate.add(0, -1));
+            continue;
+          }
+
+          atRest = true;
+
+          for (const { x, y } of nextRock.coordinates) {
+            resting.add(`${x},${y}`);
+          }
+        }
+
+        // check if we have been here before
+        const highest = (highestY < 0 ? 0 : highestY) + 1;
+        let state = `${patternMove},${rockNumber % shapes.length},`;
+        for (let y = highest; y >= highest - 10; y--) {
+          let rownum = '';
+          for (let x = 0; x < chamberWidth; x++)
+            rownum += resting.has(`${x},${y}`) ? 1 : 0;
+          state += parseInt(rownum, 2) + ',';
+        }
+
+        if (previousStates[state] != null) {
+          const pieceCountChange =
+            rockNumber - previousStates[state].rockNumber;
+          const heightChange = highest - previousStates[state].height;
+
+          const cycleAmount =
+            Math.floor(
+              (numberOfRocks - previousStates[state].rockNumber) /
+                pieceCountChange,
+            ) - 1;
+          addedHeight += cycleAmount * heightChange;
+          rockNumber += cycleAmount * pieceCountChange;
+        } else previousStates[state] = { height: highest, rockNumber };
+        rockNumber++;
+      }
+
+      return 1 + addedHeight + getHeight(resting);
+    };
+
+    return rockFall(jetPattern, 1000000000000);
+  }
+
+  runProblem17Part1(inputString: string[]) {
+    const jetPattern = inputString[0];
+
+    class Coordinate {
+      add(x: number, y: number) {
+        this.x += x;
+        this.y += y;
+      }
+
+      copy(): Coordinate {
+        return new Coordinate(this.x, this.y);
+      }
+
+      constructor(public x: number, public y: number) {}
+    }
+    class Shape {
+      copy(): Shape {
+        return new Shape(this.coordinates.map((x) => x.copy()));
+      }
+      constructor(public coordinates: Coordinate[]) {}
+    }
+
+    const shapes: Shape[] = [
+      new Shape([
+        new Coordinate(0, 0),
+        new Coordinate(1, 0),
+        new Coordinate(2, 0),
+        new Coordinate(3, 0),
+      ]),
+      new Shape([
+        new Coordinate(1, 2),
+        new Coordinate(0, 1),
+        new Coordinate(1, 1),
+        new Coordinate(2, 1),
+        new Coordinate(1, 0),
+      ]),
+      new Shape([
+        new Coordinate(2, 2),
+        new Coordinate(2, 1),
+        new Coordinate(2, 0),
+        new Coordinate(1, 0),
+        new Coordinate(0, 0),
+      ]),
+      new Shape([
+        new Coordinate(0, 0),
+        new Coordinate(0, 1),
+        new Coordinate(0, 2),
+        new Coordinate(0, 3),
+      ]),
+      new Shape([
+        new Coordinate(0, 0),
+        new Coordinate(1, 0),
+        new Coordinate(0, 1),
+        new Coordinate(1, 1),
+      ]),
+    ];
+
+    const chamberWidth = 7;
+    const resting: Shape[] = [];
+
+    const collisions = (rock: Shape, moveX: number, moveY: number): boolean => {
+      rock.coordinates = rock.coordinates.map(
+        (x) => new Coordinate(x.x + moveX, x.y + moveY),
+      );
+
+      return resting.some((shape) => {
+        for (const { x, y } of shape.coordinates) {
+          for (const c of rock.coordinates) {
+            if (x == c.x && y == c.y) return true;
+          }
+        }
+      });
+    };
+
+    const rockFall = (pattern: string, numberOfRocks: number): number => {
+      let rockNumber = 0;
+      let patternMove = 0;
+      while (rockNumber < numberOfRocks) {
+        let atRest = false;
+        const nextRock = shapes[rockNumber % shapes.length].copy();
+
+        const highestY = Math.max(
+          ...resting.flatMap((x) => x.coordinates.map((x) => x.y)),
+        );
+
+        nextRock.coordinates.forEach((coordinate) =>
+          coordinate.add(2, 3 + (highestY < 0 ? 0 : highestY + 1)),
+        );
+
+        while (!atRest) {
+          const nextJet = pattern[patternMove] == '<' ? -1 : 1;
+          patternMove++;
+          if (patternMove > pattern.length - 1) patternMove = 0;
+
+          const shapeXmax = Math.max(...nextRock.coordinates.map((x) => x.x));
+          const shapeXmin = Math.min(...nextRock.coordinates.map((x) => x.x));
+          const shapeY = Math.max(...nextRock.coordinates.map((x) => x.y));
+
+          if (
+            shapeXmin + nextJet >= 0 &&
+            shapeXmax + nextJet < chamberWidth &&
+            !collisions(nextRock.copy(), nextJet, 0)
+          ) {
+            nextRock.coordinates.forEach((coordinate) =>
+              coordinate.add(nextJet, 0),
+            );
+          }
+
+          if (shapeY - 1 >= 0 && !collisions(nextRock.copy(), 0, -1)) {
+            nextRock.coordinates.forEach((coordinate) => coordinate.add(0, -1));
+            continue;
+          }
+
+          atRest = true;
+          resting.unshift(nextRock.copy());
+        }
+        rockNumber++;
+      }
+      return (
+        Math.max(...resting.flatMap((x) => x.coordinates.map((x) => x.y))) + 1
+      );
+    };
+
+    return rockFall(jetPattern, 2022);
+  }
 
   runProblem16Part2(inputString: string[]) {
     class Valve {
