@@ -33,6 +33,108 @@ export class AppService {
 class Solver {
   private readonly utils = new Utils();
 
+  runProblem18Part2(inputString: string[]): number {
+    const cubes = inputString.map((entry) => entry.split(',').map(Number));
+    const cubeSet = new Set(cubes.map((cube) => cube.toString()));
+
+    const minPos = cubes.reduce((minPos, curr) => {
+      return [
+        Math.min(minPos[0], curr[0]),
+        Math.min(minPos[1], curr[1]),
+        Math.min(minPos[2], curr[2]),
+      ];
+    }, cubes[0]);
+    const maxPos = cubes.reduce((maxPos, curr) => {
+      return [
+        Math.max(maxPos[0], curr[0]),
+        Math.max(maxPos[1], curr[1]),
+        Math.max(maxPos[2], curr[2]),
+      ];
+    }, cubes[0]);
+
+    const getAdjacents = (cube: number[]): number[][] => {
+      return [
+        [cube[0] + 1, cube[1], cube[2]],
+        [cube[0], cube[1] + 1, cube[2]],
+        [cube[0], cube[1], cube[2] + 1],
+        [cube[0] - 1, cube[1], cube[2]],
+        [cube[0], cube[1] - 1, cube[2]],
+        [cube[0], cube[1], cube[2] - 1],
+      ];
+    };
+
+    const getWaterCubes = (
+      minPos: number[],
+      maxPos: number[],
+      cubes: Set<string>,
+    ): Set<string> => {
+      const visited = new Set<string>();
+      const toVisit = [maxPos];
+
+      let curr;
+      while ((curr = toVisit.shift())) {
+        if (visited.has(curr.toString())) continue;
+
+        const worthyAdjacent = getAdjacents(curr).filter(
+          (neighbour) =>
+            !visited.has(neighbour.toString()) &&
+            !cubes.has(neighbour.toString()) &&
+            neighbour[0] >= minPos[0] - 1 &&
+            neighbour[1] >= minPos[1] - 1 &&
+            neighbour[2] >= minPos[2] - 1 &&
+            neighbour[0] <= maxPos[0] + 1 &&
+            neighbour[1] <= maxPos[1] + 1 &&
+            neighbour[2] <= maxPos[2] + 1,
+        );
+
+        toVisit.push(...worthyAdjacent);
+
+        visited.add(curr.toString());
+      }
+
+      return visited;
+    };
+
+    const waterCubes = getWaterCubes(minPos, maxPos, cubeSet);
+
+    return cubes
+      .map(
+        (cube) =>
+          getAdjacents(cube).filter((neighbour) =>
+            waterCubes.has(neighbour.toString()),
+          ).length,
+      )
+      .reduce((acc, v) => acc + v, 0);
+  }
+
+  runProblem18Part1(inputString: string[]): number {
+    const cubes: { x: number; y: number; z: number }[] = inputString.map(
+      (entry) => {
+        const [x, y, z] = entry.split(',');
+        return { x: Number(x), y: Number(y), z: Number(z) };
+      },
+    );
+
+    const cubeSet = new Set(...[inputString]);
+    const adjacent = [
+      { x: 1, y: 0, z: 0 },
+      { x: -1, y: 0, z: 0 },
+      { x: 0, y: 1, z: 0 },
+      { x: 0, y: -1, z: 0 },
+      { x: 0, y: 0, z: 1 },
+      { x: 0, y: 0, z: -1 },
+    ];
+    let covered = 0;
+    for (const cube of cubes) {
+      for (const { x, y, z } of adjacent) {
+        if (!cubeSet.has(`${cube.x + x},${cube.y + y},${cube.z + z}`))
+          covered++;
+      }
+    }
+
+    return covered;
+  }
+
   runProblem17Part2(inputString: string[]) {
     const jetPattern = inputString[0];
 
